@@ -23,22 +23,54 @@ on:
 
 jobs:
   build:
-    name: Update deployment status for macOS
-    if: inputs.image == 'macos-11' || inputs.image == 'macos-12'
+    name: Update deployment status
     runs-on: ubuntu-latest
-
     steps:
       - name: Update gist
         env:
           GH_TOKEN: ${{ secrets.GH_GIST_TOKEN }}
         run: |
-          filename="${{ inputs.image }}.json"
+          # Set color
           if [ "${{ inputs.complete }}" == "true" ]; then
-            message='✔ ${{ inputs.version }}'
             color=green
           else
-            message='⭮ ${{ inputs.version }}'
             color=orange
           fi
-          echo "{\"schemaVersion\": 1, \"label\": \"\", \"message\": \"$message\", \"color\": \"$color\"}" > "${filename}"
+
+          # Set label
+          case "${{ inputs.image }}" in
+            macos-*)
+              label='' ;;
+            ubuntu-20)
+              label='Ubuntu 20.04' ;;
+            ubuntu-22)
+              label='Ubuntu 22.04' ;;
+            windows-*)
+              label='${{ inputs.version }}' ;;
+          esac
+          
+          # Set message
+          case "${{ inputs.image }}" in
+            macos-*)
+              if [ "${{ inputs.complete }}" == "true" ]; then
+                message='✔ ${{ inputs.version }}'
+              else
+                message='⭮ ${{ inputs.version }}'
+              fi ;;
+            ubuntu-*)
+              message='${{ inputs.version }}' ;;
+            windows-*)
+              if [ "${{ inputs.complete }}" == "true" ]; then
+                message='Updating...'
+              else
+                message='Updated'
+              fi ;;
+          esac
+
+          filename="${{ inputs.image }}.json"
+          echo "{\"schemaVersion\": 1,
+            \"label\": \"$label\",
+            \"message\": \"$message\",
+            \"color\": \"$color\"
+          }" > "${filename}"
           gh gist edit "0e7b4bad13ceb1da55245092847008e1" -a "${filename}"
