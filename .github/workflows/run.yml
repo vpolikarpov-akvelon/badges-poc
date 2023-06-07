@@ -61,9 +61,9 @@ jobs:
               message='${{ inputs.version }}' ;;
             windows-*)
               if [ "${{ inputs.complete }}" == "true" ]; then
-                message='Updating...'
-              else
                 message='Updated'
+              else
+                message='Updating...'
               fi ;;
           esac
 
