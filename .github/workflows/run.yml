@@ -1,0 +1,44 @@
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image name'
+        required: true
+        type: choice
+        options:
+          - macos-11
+          - macos-12
+          - ubuntu-20
+          - ubuntu-22
+          - windows-2019
+          - windows-2022
+      version:
+        description: 'Version to display'
+        required: true
+        type: string
+      complete:
+        description: 'Deployment is completed'
+        required: true
+        type: boolean
+
+jobs:
+  build:
+    name: Update deployment status for macOS
+    if: inputs.image == 'macos-11' || inputs.image == 'macos-12'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update gist
+        env:
+          GH_TOKEN: ${{ secrets.GH_GIST_TOKEN }}
+        run: |
+          filename="${{ inputs.image }}.json"
+          if [ "${{ inputs.complete }}" == "true" ]; then
+            message='✔ ${{ inputs.version }}'
+            color=green
+          else
+            message='⭮ ${{ inputs.version }}'
+            color=orange
+          fi
+          echo "{\"schemaVersion\": 1, \"label\": \"\", \"message\": \"$message\", \"color\": \"$color\"}" > "${filename}"
+          gh gist edit "0e7b4bad13ceb1da55245092847008e1" -a "${filename}"
